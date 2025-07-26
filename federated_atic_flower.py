@@ -9,8 +9,8 @@ This script compares three modes of training:
  3. **Federated (FedAvg)**: three-client federated learning, 1 epoch per round, requiring all clients.
 
 It then produces a publication-ready two-panel figure showing:
- - Test MSE over federated rounds
- - Test MAE over federated rounds
+ - Test BCE over federated rounds
+ - Test ACC over federated rounds
 
 With:
  - Gray bands for the mean ±1σ of local-only (clients trained in isolation)
@@ -651,6 +651,28 @@ def main() -> None:
         print("\nStarting Federated Learning …")
         # Use patched federated server to save weights
         start_federated((data['X_test'], data['y_test']), num_rounds=args.rounds)
+        local_arr     = np.stack(local_hist_bces, axis=0)
+        local_acc_arr = np.stack(local_hist_accs, axis=0)
+
+        worst_bce_per_epoch = local_arr.max(axis=0)
+        best_worst_bce_idx  = int(np.argmin(worst_bce_per_epoch))
+        print(
+        f"\nAggregate Local (robust) • Epoch {best_worst_bce_idx+1:02d}  "
+        f"Worst-case BCE={worst_bce_per_epoch[best_worst_bce_idx]:.6f}  "
+        f"(range {local_arr[:,best_worst_bce_idx].min():.6f}–"
+        f"{local_arr[:,best_worst_bce_idx].max():.6f})"
+    
+        )
+        
+        worst_acc_per_epoch = local_acc_arr.min(axis=0)
+        best_worst_acc_idx  = int(np.argmax(worst_acc_per_epoch))
+        print(
+        f"Aggregate Local (robust) • Epoch {best_worst_acc_idx+1:02d}  "
+        f"Worst-case Acc={worst_acc_per_epoch[best_worst_acc_idx]:.6f}  "
+        f"(range {local_acc_arr[:,best_worst_acc_idx].min():.6f}–"
+        f"{local_acc_arr[:,best_worst_acc_idx].max():.6f})"
+        )
+
 
         retrain_hist_bce, retrain_hist_acc, scratch_hist_bce, scratch_hist_acc = None, None, None, None
         if args.retrain:
