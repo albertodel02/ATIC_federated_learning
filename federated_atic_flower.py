@@ -656,12 +656,19 @@ def main() -> None:
 
         worst_bce_per_epoch = local_arr.max(axis=0)
         best_worst_bce_idx  = int(np.argmin(worst_bce_per_epoch))
+        accs_at_best_bce = local_acc_arr[:, best_worst_bce_idx]
+        worst_acc  = accs_at_best_bce.min()
+        best_acc   = accs_at_best_bce.max()
+        avg_acc    = accs_at_best_bce.mean()
+
         print(
         f"\nAggregate Local (robust) • Epoch {best_worst_bce_idx+1:02d}  "
         f"Worst-case BCE={worst_bce_per_epoch[best_worst_bce_idx]:.6f}  "
         f"(range {local_arr[:,best_worst_bce_idx].min():.6f}–"
-        f"{local_arr[:,best_worst_bce_idx].max():.6f})"
-    
+        f"{local_arr[:,best_worst_bce_idx].max():.6f})\n"
+        f"Aggregate Accuracy        • Epoch {best_worst_bce_idx+1:02d}  "
+        f"Worst-case ACC={worst_acc:.6f}  "
+        f"(range {worst_acc:.6f}–{best_acc:.6f}, avg={avg_acc:.6f})"
         )
         
         worst_acc_per_epoch = local_acc_arr.min(axis=0)
